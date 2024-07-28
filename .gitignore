@@ -1,1 +1,5 @@
 .env
+src/cert/*
+src/conf/*
+src/data/*
+src/logs/*
