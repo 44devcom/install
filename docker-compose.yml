@@ -5,28 +5,28 @@ services:
     image: 'gitlab/gitlab-ee:latest'
     container_name: 'gitlab-server'
     restart: always
-    hostname: '${GITLAB_DOMAIN_OR_IP}'
+    hostname: '${GITLAB_DOMAIN_OR_IP:-localhost}'
     environment:
       GITLAB_OMNIBUS_CONFIG: |
-        external_url = "https://${GITLAB_DOMAIN_OR_IP}"
-        gitlab_rails['smtp_enable'] = "true"
-        gitlab_rails['smtp_address'] = "${GITLAB_SMTP_SERVER}"
-        gitlab_rails['smtp_user_name'] = "${GITLAB_SMTP_SERVER_USERNAME}"
-        gitlab_rails['smtp_password'] = "${GITLAB_SMTP_SERVER_PASSWORD}"
-        gitlab_rails['smtp_domain'] = "${GITLAB_DOMAIN}"
+        external_url = "https://${GITLAB_DOMAIN_OR_IP:-gitlab.example.com}"
+        gitlab_rails['smtp_enable'] = "${GITLAB_SMTP_ENABLE:-true}"
+        gitlab_rails['smtp_address'] = "${GITLAB_SMTP_SERVER:-smtp.example.com}"
+        gitlab_rails['smtp_user_name'] = "${GITLAB_SMTP_SERVER_USERNAME:-username}"
+        gitlab_rails['smtp_password'] = "${GITLAB_SMTP_SERVER_PASSWORD:-password}"
+        gitlab_rails['smtp_domain'] = "${GITLAB_DOMAIN:-example.com}"
         gitlab_rails['smtp_enable_starttls_auto'] = "true"
-        gitlab_rails['smtp_port'] = ${GITLAB_SMTP_PORT}
+        gitlab_rails['smtp_port'] = ${GITLAB_SMTP_PORT:-587}
         gitlab_rails['smtp_authentication'] = "login"
-        gitlab_rails['gitlab_email_from'] = "${GITLAB_FROM_EMAIL}"
-        gitlab_rails['gitlab_email_reply_to'] = "${GITLAB_REPLY_EMAIL}"
-        gitlab_rails['initial_root_password'] = "${GITLAB_ROOT_PASSWORD:-password}"
+        gitlab_rails['gitlab_email_from'] = "${GITLAB_FROM_EMAIL:-from@example.com}"
+        gitlab_rails['gitlab_email_reply_to'] = "${GITLAB_REPLY_EMAIL:-reply@example.com}"
+        gitlab_rails['initial_root_password'] = "${GITLAB_ROOT_PASSWORD:-yourrootpassword}"
     ports:
-      - '${GITLAB_HTTP_PORT}:80'
-      - '${GITLAB_HTTPS_PORT}:443'
-      - '${GITLAB_SSH_PORT}:22'
-      - '${GITLAB_SMTP_PORT}:587'
+      - '${GITLAB_HTTP_PORT:-80}:80'
+      - '${GITLAB_HTTPS_PORT:-443}:443'
+      - '${GITLAB_SSH_PORT:-22}:22'
+      - '${GITLAB_SMTP_PORT:-587}:587'
     volumes:
-      - '${GITLAB_HOME}/config:/etc/gitlab'
-      - '${GITLAB_HOME}/logs:/var/log/gitlab'
-      - '${GITLAB_HOME}/data:/var/opt/gitlab'
+      - '${GITLAB_HOME:-/srv/gitlab}/config:/etc/gitlab'
+      - '${GITLAB_HOME:-/srv/gitlab}/logs:/var/log/gitlab'
+      - '${GITLAB_HOME:-/srv/gitlab}/data:/var/opt/gitlab'
     shm_size: '256m'
