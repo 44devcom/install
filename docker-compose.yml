@@ -1,0 +1,64 @@
+version: '3.6'
+
+services:
+  gitlab:
+    image: 'gitlab/gitlab-ee:latest'
+    container_name: 'gitlab'
+    restart: always
+    hostname: '${GITLAB_DOMAIN_OR_IP:-localhost}'
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url = "https://${GITLAB_DOMAIN_OR_IP:-localhost}"
+        gitlab_rails['smtp_enable'] = "${GITLAB_SMTP_ENABLE:-true}"
+        gitlab_rails['smtp_address'] = "${GITLAB_SMTP_SERVER:-smtp.example.com}"
+        gitlab_rails['smtp_user_name'] = "${GITLAB_SMTP_SERVER_USERNAME:-username}"
+        gitlab_rails['smtp_password'] = "${GITLAB_SMTP_SERVER_PASSWORD:-password}"
+        gitlab_rails['smtp_domain'] = "${GITLAB_DOMAIN:-example.com}"
+        gitlab_rails['smtp_enable_starttls_auto'] = "true"
+        gitlab_rails['smtp_port'] = ${GITLAB_SMTP_PORT:-587}
+        gitlab_rails['smtp_authentication'] = "login"
+        gitlab_rails['gitlab_email_display_name'] = "${GITLAB_FROM_EMAIL:-'GitLab Administrator'"
+        gitlab_rails['gitlab_email_from'] = "${GITLAB_FROM_EMAIL:-from@example.com}"
+        gitlab_rails['gitlab_email_reply_to'] = "${GITLAB_REPLY_EMAIL:-reply@example.com}"
+        gitlab_rails['gitlab_shell_ssh_port'] = ${GITLAB_SSH_PORT:-2222}
+    ports:
+      - '${GITLAB_HTTP_PORT:-8080}:80'
+      - '${GITLAB_HTTPS_PORT:-8443}:443'
+      - '${GITLAB_SSH_PORT:-2222}:22'
+      - '${GITLAB_SMTP_PORT:-587}:587'
+    volumes:
+      - '${GITLAB_HOME:-./gitlab}/conf:/etc/gitlab:rw'
+      - '${GITLAB_HOME:-./gitlab}/data:/var/opt/gitlab:rw'
+      - '${GITLAB_HOME:-./gitlab}/logs:/var/logs/gitlab:rw'
+    tmpfs:
+      - /run
+      - /tmp
+    shm_size: '256m'
+    deploy:
+      resources:
+        limits:
+          cpus: '3.0'       # Limit to 3 CPU cores
+          memory: '6g'      # Limit to 6 GB memory
+    networks:
+        - gitlab-network
+
+  nginx:
+    image: 'nginx:latest'
+    container_name: 'nginx-proxy'
+    restart: always
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - './nginx.conf:/etc/nginx/nginx.conf:ro'
+      - '${GITLAB_HOME:-./gitlab}/cert:/etc/nginx/certs:rw'
+    networks:
+      - gitlab-network
+    command: /bin/sh -c "if [ ! -f /etc/nginx/certs/cert.crt ] || [ ! -f /etc/nginx/certs/cert.key ]; then mkdir -p /etc/nginx/certs && openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/nginx/certs/cert.key -out /etc/nginx/certs/cert.crt -subj '/CN=${GITLAB_DOMAIN_OR_IP:-localhost}'; fi && nginx -g 'daemon off;'"
+    depends_on:
+      - gitlab
+
+networks:
+    gitlab-network:
+        name: gitlab-network
+        driver: bridge
