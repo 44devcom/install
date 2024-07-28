@@ -1,5 +1,14 @@
-src/cert/
-src/conf/
-src/data/
-src/logs/
+# Ignore all files and subdirectories in tmp/cert, tmp/conf, tmp/data, and tmp/logs
+tmp/cert/**
+tmp/conf/**
+tmp/data/**
+tmp/logs/**
+
+# Ensure the tmp/cert, tmp/conf, tmp/data, and tmp/logs directories themselves are tracked
+!tmp/cert/
+!tmp/conf/
+!tmp/data/
+!tmp/logs/
+
+# Ignore the .env file
 .env
